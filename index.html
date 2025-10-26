@@ -14,30 +14,96 @@
     :root {
       --bg1:#f4fff7; --bg2:#e6f6e7; --accent:#2f7e12; --muted:#6b7a66; --card:#fff;
     }
-    body{margin:0;font-family:Inter,sans-serif;background:linear-gradient(180deg,var(--bg1),var(--bg2));display:flex;justify-content:center;align-items:center;min-height:100vh;padding:16px;}
-    .app{background:var(--card);border-radius:16px;box-shadow:0 12px 28px rgba(0,0,0,0.1);padding:24px;max-width:900px;width:100%;display:grid;grid-template-columns:1fr 300px;gap:20px;}
+    body {
+      margin:0;
+      font-family:Inter,sans-serif;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      padding:16px;
+    }
+    .app {
+      background:var(--card);
+      border-radius:16px;
+      box-shadow:0 12px 28px rgba(0,0,0,0.1);
+      padding:24px;
+      max-width:900px;
+      width:100%;
+      display:grid;
+      grid-template-columns:1fr 300px;
+      gap:20px;
+    }
     @media(max-width:850px){.app{grid-template-columns:1fr;} }
     h1{margin:0;color:var(--accent);}
-    .controls button{margin:6px;padding:10px 14px;font-weight:600;border-radius:10px;border:none;cursor:pointer;}
+    .controls {
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:8px;
+      margin-top:10px;
+    }
+    .controls button {
+      padding:10px 14px;
+      font-weight:600;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+    }
     .btn-primary{background:var(--accent);color:#fff;}
-    .media{background:var(--card);border-radius:12px;padding:10px;display:flex;justify-content:center;align-items:center;min-height:240px;box-shadow:0 8px 20px rgba(0,0,0,0.05);}
-    video,img{width:100%;height:auto;border-radius:8px;max-height:400px;object-fit:contain;}
+    .media {
+      background:var(--card);
+      border-radius:12px;
+      padding:10px;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:240px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.05);
+    }
+    video,img {
+      width:100%;
+      height:auto;
+      border-radius:8px;
+      max-height:400px;
+      object-fit:contain;
+    }
     .right{display:flex;flex-direction:column;gap:12px;}
-    .result-card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.05);}
+    .result-card {
+      background:var(--card);
+      padding:14px;
+      border-radius:12px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.05);
+    }
     .prediction{font-size:20px;font-weight:800;color:var(--accent);}
     .prob{font-size:14px;color:var(--muted);}
     .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.1);border-top-color:var(--accent);animation:spin 1s linear infinite;display:inline-block;}
     @keyframes spin { to{transform:rotate(360deg);} }
     .hint{font-size:13px;color:var(--muted);margin-top:8px;}
-    select{padding:8px 12px;border-radius:8px;border:1px solid #ccc;font-weight:600;background:white;cursor:pointer;}
+    select {
+      padding:8px 10px;
+      border-radius:8px;
+      border:1px solid #ccc;
+      font-weight:600;
+      background:white;
+      cursor:pointer;
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <!-- LEFT PANEL -->
     <div class="left">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h1 id="title">AgriVision — Crop & Disease Detector</h1>
+      <h1 id="title">AgriVision — Crop & Disease Detector</h1>
+      <div class="controls">
+        <button id="btn-open">Open Camera</button>
+        <label class="btn-upload" style="cursor:pointer;">
+          <span id="uploadLabel" style="display:inline-block;padding:10px 14px;border-radius:10px;background:#eee;">Upload Image</span>
+          <input type="file" id="file" accept="image/*" style="display:none;">
+        </label>
+        <button id="btn-detect" class="btn-primary" disabled>Detect</button>
+        <!-- ✅ Language selector beside Detect button -->
         <select id="languageSelect">
           <option value="en">English</option>
           <option value="hi">हिन्दी</option>
@@ -49,15 +115,6 @@
           <option value="pa">ਪੰਜਾਬੀ</option>
           <option value="kn">ಕನ್ನಡ</option>
         </select>
-      </div>
-
-      <div class="controls">
-        <button id="btn-open">Open Camera</button>
-        <label class="btn-upload" style="cursor:pointer;">
-          <span id="uploadLabel" style="display:inline-block;margin:6px;padding:10px 14px;border-radius:10px;background:#eee;">Upload Image</span>
-          <input type="file" id="file" accept="image/*" style="display:none;">
-        </label>
-        <button id="btn-detect" class="btn-primary" disabled>Detect</button>
       </div>
 
       <div class="media" id="media-area">
@@ -113,128 +170,19 @@
     };
 
     const translations = {
-      en: {
-        title:"AgriVision — Crop & Disease Detector",
-        openCamera:"Open Camera",
-        upload:"Upload Image",
-        detect:"Detect",
-        loading:"Loading Teachable Machine model...",
-        hint:"Use your camera or upload an image to detect crop health.",
-        prediction:"Prediction",
-        more:"More Info",
-        buy:"Buy Products",
-        waiting:"Status: Waiting for model",
-        preview:"Preview<br>Open camera or upload an image"
-      },
-      hi:{
-        title:"AgriVision — फ़सल एवं रोग पहचानकर्ता",
-        openCamera:"कैमरा खोलें",
-        upload:"छवि अपलोड करें",
-        detect:"पता लगाएं",
-        loading:"Teachable Machine मॉडल लोड हो रहा है...",
-        hint:"फ़सल के स्वास्थ्य का पता लगाने के लिए कैमरा या छवि का उपयोग करें।",
-        prediction:"अनुमान",
-        more:"अधिक जानकारी",
-        buy:"उत्पाद खरीदें",
-        waiting:"स्थिति: मॉडल की प्रतीक्षा हो रही है",
-        preview:"पूर्वावलोकन<br>कैमरा खोलें या छवि अपलोड करें"
-      },
-      bn:{
-        title:"AgriVision — ফসল ও রোগ শনাক্তকারী",
-        openCamera:"ক্যামেরা খুলুন",
-        upload:"ছবি আপলোড করুন",
-        detect:"সনাক্ত করুন",
-        loading:"Teachable Machine মডেল লোড হচ্ছে...",
-        hint:"ফসলের স্বাস্থ্য সনাক্ত করতে ক্যামেরা বা ছবি ব্যবহার করুন।",
-        prediction:"পূর্বাভাস",
-        more:"আরও তথ্য",
-        buy:"পণ্য কিনুন",
-        waiting:"অবস্থা: মডেল অপেক্ষায় আছে",
-        preview:"পূর্বরূপ<br>ক্যামেরা খুলুন বা ছবি আপলোড করুন"
-      },
-      ta:{
-        title:"AgriVision — பயிர் மற்றும் நோய் கண்டறியும் கருவி",
-        openCamera:"கேமராவை திறக்கவும்",
-        upload:"படத்தை பதிவேற்றவும்",
-        detect:"கண்டறியவும்",
-        loading:"மாதிரி ஏற்றப்படுகிறது...",
-        hint:"பயிர் ஆரோக்கியத்தை கண்டறிய கேமரா அல்லது படத்தைப் பயன்படுத்தவும்.",
-        prediction:"முன்கூட்டிய கணிப்பு",
-        more:"மேலும் தகவல்",
-        buy:"பொருட்கள் வாங்க",
-        waiting:"நிலை: மாதிரி காத்திருக்கிறது",
-        preview:"முன்னோட்டம்<br>கேமரா திறக்கவும் அல்லது படத்தை பதிவேற்றவும்"
-      },
-      te:{
-        title:"AgriVision — పంట & వ్యాధి గుర్తింపు పరికరం",
-        openCamera:"కెమెరాను తెరవండి",
-        upload:"చిత్రాన్ని అప్లోడ్ చేయండి",
-        detect:"గుర్తించు",
-        loading:"మోడల్ లోడ్ అవుతోంది...",
-        hint:"పంట ఆరోగ్యాన్ని గుర్తించడానికి కెమెరా లేదా చిత్రాన్ని ఉపయోగించండి.",
-        prediction:"అంచనా",
-        more:"మరింత సమాచారం",
-        buy:"ఉత్పత్తులు కొనండి",
-        waiting:"స్థితి: మోడల్ కోసం వేచి ఉంది",
-        preview:"ప్రివ్యూ<br>కెమెరాను తెరవండి లేదా చిత్రాన్ని అప్లోడ్ చేయండి"
-      },
-      gu:{
-        title:"AgriVision — પાક અને રોગ શોધક",
-        openCamera:"કેમેરા ખોલો",
-        upload:"છબી અપલોડ કરો",
-        detect:"શોધો",
-        loading:"મોડેલ લોડ થઈ રહ્યું છે...",
-        hint:"પાકના આરોગ્યને શોધવા માટે કેમેરા અથવા છબીનો ઉપયોગ કરો.",
-        prediction:"અનુમાન",
-        more:"વધુ માહિતી",
-        buy:"ઉત્પાદનો ખરીદો",
-        waiting:"સ્થિતિ: મોડેલની રાહ જોવાઈ રહી છે",
-        preview:"પૂર્વાવલોકન<br>કેમેરા ખોલો અથવા છબી અપલોડ કરો"
-      },
-      mr:{
-        title:"AgriVision — पिक आणि रोग शोधक",
-        openCamera:"कॅमेरा उघडा",
-        upload:"प्रतिमा अपलोड करा",
-        detect:"ओळखा",
-        loading:"मॉडेल लोड होत आहे...",
-        hint:"पिकांच्या आरोग्याचे निदान करण्यासाठी कॅमेरा किंवा प्रतिमा वापरा.",
-        prediction:"भविष्यवाणी",
-        more:"अधिक माहिती",
-        buy:"उत्पादने खरेदी करा",
-        waiting:"स्थिती: मॉडेल प्रतीक्षेत आहे",
-        preview:"पूर्वावलोकन<br>कॅमेरा उघडा किंवा प्रतिमा अपलोड करा"
-      },
-      pa:{
-        title:"AgriVision — ਫਸਲ ਅਤੇ ਬਿਮਾਰੀ ਖੋਜਕ",
-        openCamera:"ਕੈਮਰਾ ਖੋਲ੍ਹੋ",
-        upload:"ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ",
-        detect:"ਖੋਜੋ",
-        loading:"ਮਾਡਲ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
-        hint:"ਫਸਲ ਦੀ ਸਿਹਤ ਦੀ ਪਛਾਣ ਕਰਨ ਲਈ ਕੈਮਰੇ ਜਾਂ ਤਸਵੀਰ ਦੀ ਵਰਤੋਂ ਕਰੋ।",
-        prediction:"ਅਨੁਮਾਨ",
-        more:"ਹੋਰ ਜਾਣਕਾਰੀ",
-        buy:"ਉਤਪਾਦ ਖਰੀਦੋ",
-        waiting:"ਸਥਿਤੀ: ਮਾਡਲ ਦੀ ਉਡੀਕ ਕਰ ਰਹੇ ਹਾਂ",
-        preview:"ਪੂਰਵ ਦਰਸ਼ਨ<br>ਕੈਮਰਾ ਖੋਲ੍ਹੋ ਜਾਂ ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ"
-      },
-      kn:{
-        title:"AgriVision — ಬೆಳೆ ಮತ್ತು ರೋಗ ಪತ್ತೆಗಾರ",
-        openCamera:"ಕ್ಯಾಮೆರಾ ತೆರೆಯಿರಿ",
-        upload:"ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",
-        detect:"ಹುಡುಕಿ",
-        loading:"ಮಾದರಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
-        hint:"ಬೆಳೆ ಆರೋಗ್ಯವನ್ನು ಪತ್ತೆಹಚ್ಚಲು ಕ್ಯಾಮೆರಾ ಅಥವಾ ಚಿತ್ರವನ್ನು ಬಳಸಿ.",
-        prediction:"ಭವಿಷ್ಯವಾಣಿ",
-        more:"ಹೆಚ್ಚಿನ ಮಾಹಿತಿ",
-        buy:"ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ",
-        waiting:"ಸ್ಥಿತಿ: ಮಾದರಿಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",
-        preview:"ಪೂರ್ವದೃಶ್ಯ<br>ಕ್ಯಾಮೆರಾ ತೆರೆಯಿರಿ ಅಥವಾ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"
-      }
+      en:{title:"AgriVision — Crop & Disease Detector",openCamera:"Open Camera",upload:"Upload Image",detect:"Detect",loading:"Loading Teachable Machine model...",hint:"Use your camera or upload an image to detect crop health.",prediction:"Prediction",more:"More Info",buy:"Buy Products",waiting:"Status: Waiting for model",preview:"Preview<br>Open camera or upload an image"},
+      hi:{title:"AgriVision — फ़सल एवं रोग पहचानकर्ता",openCamera:"कैमरा खोलें",upload:"छवि अपलोड करें",detect:"पता लगाएं",loading:"Teachable Machine मॉडल लोड हो रहा है...",hint:"फ़सल के स्वास्थ्य का पता लगाने के लिए कैमरा या छवि का उपयोग करें।",prediction:"अनुमान",more:"अधिक जानकारी",buy:"उत्पाद खरीदें",waiting:"स्थिति: मॉडल की प्रतीक्षा हो रही है",preview:"पूर्वावलोकन<br>कैमरा खोलें या छवि अपलोड करें"},
+      bn:{title:"AgriVision — ফসল ও রোগ শনাক্তকারী",openCamera:"ক্যামেরা খুলুন",upload:"ছবি আপলোড করুন",detect:"সনাক্ত করুন",loading:"Teachable Machine মডেল লোড হচ্ছে...",hint:"ফসলের স্বাস্থ্য সনাক্ত করতে ক্যামেরা বা ছবি ব্যবহার করুন।",prediction:"পূর্বাভাস",more:"আরও তথ্য",buy:"পণ্য কিনুন",waiting:"অবস্থা: মডেল অপেক্ষায় আছে",preview:"পূর্বরূপ<br>ক্যামেরা খুলুন বা ছবি আপলোড করুন"},
+      ta:{title:"AgriVision — பயிர் மற்றும் நோய் கண்டறியும் கருவி",openCamera:"கேமராவை திறக்கவும்",upload:"படத்தை பதிவேற்றவும்",detect:"கண்டறியவும்",loading:"மாதிரி ஏற்றப்படுகிறது...",hint:"பயிர் ஆரோக்கியத்தை கண்டறிய கேமரா அல்லது படத்தைப் பயன்படுத்தவும்.",prediction:"முன்கூட்டிய கணிப்பு",more:"மேலும் தகவல்",buy:"பொருட்கள் வாங்க",waiting:"நிலை: மாதிரி காத்திருக்கிறது",preview:"முன்னோட்டம்<br>கேமரா திறக்கவும் அல்லது படத்தை பதிவேற்றவும்"},
+      te:{title:"AgriVision — పంట & వ్యాధి గుర్తింపు పరికరం",openCamera:"కెమెరాను తెరవండి",upload:"చిత్రాన్ని అప్లోడ్ చేయండి",detect:"గుర్తించు",loading:"మోడల్ లోడ్ అవుతోంది...",hint:"పంట ఆరోగ్యాన్ని గుర్తించడానికి కెమెరా లేదా చిత్రాన్ని ఉపయోగించండి.",prediction:"అంచనా",more:"మరింత సమాచారం",buy:"ఉత్పత్తులు కొనండి",waiting:"స్థితి: మోడల్ కోసం వేచి ఉంది",preview:"ప్రివ్యూ<br>కెమెరాను తెరవండి లేదా చిత్రాన్ని అప్లోడ్ చేయండి"},
+      gu:{title:"AgriVision — પાક અને રોગ શોધક",openCamera:"કેમેરા ખોલો",upload:"છબી અપલોડ કરો",detect:"શોધો",loading:"મોડેલ લોડ થઈ રહ્યું છે...",hint:"પાકના આરોગ્યને શોધવા માટે કેમેરા અથવા છબીનો ઉપયોગ કરો.",prediction:"અનુમાન",more:"વધુ માહિતી",buy:"ઉત્પાદનો ખરીદો",waiting:"સ્થિતિ: મોડેલની રાહ જોવાઈ રહી છે",preview:"પૂર્વાવલોકન<br>કેમેરા ખોલો અથવા છબી અપલોડ કરો"},
+      mr:{title:"AgriVision — पिक आणि रोग शोधक",openCamera:"कॅमेरा उघडा",upload:"प्रतिमा अपलोड करा",detect:"ओळखा",loading:"मॉडेल लोड होत आहे...",hint:"पिकांच्या आरोग्याचे निदान करण्यासाठी कॅमेरा किंवा प्रतिमा वापरा.",prediction:"भविष्यवाणी",more:"अधिक माहिती",buy:"उत्पादने खरेदी करा",waiting:"स्थिती: मॉडेल प्रतीक्षेत आहे",preview:"पूर्वावलोकन<br>कॅमेरा उघडा किंवा प्रतिमा अपलोड करा"},
+      pa:{title:"AgriVision — ਫਸਲ ਅਤੇ ਬਿਮਾਰੀ ਖੋਜਕ",openCamera:"ਕੈਮਰਾ ਖੋਲ੍ਹੋ",upload:"ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ",detect:"ਖੋਜੋ",loading:"ਮਾਡਲ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",hint:"ਫਸਲ ਦੀ ਸਿਹਤ ਦੀ ਪਛਾਣ ਕਰਨ ਲਈ ਕੈਮਰੇ ਜਾਂ ਤਸਵੀਰ ਦੀ ਵਰਤੋਂ ਕਰੋ।",prediction:"ਅਨੁਮਾਨ",more:"ਹੋਰ ਜਾਣਕਾਰੀ",buy:"ਉਤਪਾਦ ਖਰੀਦੋ",waiting:"ਸਥਿਤੀ: ਮਾਡਲ ਦੀ ਉਡੀਕ ਕਰ ਰਹੇ ਹਾਂ",preview:"ਪੂਰਵ ਦਰਸ਼ਨ<br>ਕੈਮਰਾ ਖੋਲ੍ਹੋ ਜਾਂ ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ"},
+      kn:{title:"AgriVision — ಬೆಳೆ ಮತ್ತು ರೋಗ ಪತ್ತೆಗಾರ",openCamera:"ಕ್ಯಾಮೆರಾ ತೆರೆಯಿರಿ",upload:"ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ",detect:"ಹುಡುಕಿ",loading:"ಮಾದರಿ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",hint:"ಬೆಳೆ ಆರೋಗ್ಯವನ್ನು ಪತ್ತೆಹಚ್ಚಲು ಕ್ಯಾಮೆರಾ ಅಥವಾ ಚಿತ್ರವನ್ನು ಬಳಸಿ.",prediction:"ಭವಿಷ್ಯವಾಣಿ",more:"ಹೆಚ್ಚಿನ ಮಾಹಿತಿ",buy:"ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ",waiting:"ಸ್ಥಿತಿ: ಮಾದರಿಗಾಗಿ ಕಾಯಲಾಗುತ್ತಿದೆ",preview:"ಪೂರ್ವದೃಶ್ಯ<br>ಕ್ಯಾಮೆರಾ ತೆರೆಯಿರಿ ಅಥವಾ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"}
     };
 
     document.getElementById('languageSelect').addEventListener('change', e => {
-      const lang = e.target.value;
-      const t = translations[lang];
+      const t = translations[e.target.value];
       elements.title.textContent = t.title;
       elements.btnOpen.textContent = t.openCamera;
       elements.uploadLabel.textContent = t.upload;
@@ -248,20 +196,18 @@
       elements.placeholder.innerHTML = t.preview;
     });
 
-    // ✅ Load model
-    async function initModel() {
-      try {
+    async function initModel(){
+      try{
         const modelURL = MODEL_URL + "model.json";
         const metadataURL = MODEL_URL + "metadata.json";
         model = await tmImage.load(modelURL, metadataURL);
         elements.modelStatus.textContent = "✅ Model loaded successfully!";
         elements.statusText.textContent = "Status: Model ready";
-        document.getElementById('btn-detect').disabled = false;
-      } catch (err) {
+        elements.btnDetect.disabled = false;
+      }catch(err){
         elements.modelStatus.textContent = "❌ Failed to load model.";
       }
     }
-
     initModel();
   </script>
 </body>
