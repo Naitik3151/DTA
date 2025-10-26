@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AgriVision — Crop & Disease Detector</title>
+
+  <!-- ✅ Add Teachable Machine TensorFlow.js scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8/dist/teachablemachine-image.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1:#f4fff7; --bg2:#e6f6e7; --accent:#2f7e12; --muted:#6b7a66; --card:#fff;
+    }
+    body{ margin:0; font-family:Inter,sans-serif; background:linear-gradient(180deg,var(--bg1),var(--bg2)); display:flex; justify-content:center; align-items:center; min-height:100vh; padding:16px;}
+    .app{ background:var(--card); border-radius:16px; box-shadow:0 12px 28px rgba(0,0,0,0.1); padding:24px; max-width:800px; width:100%; display:grid; grid-template-columns:1fr 300px; gap:20px;}
+    @media(max-width:850px){.app{grid-template-columns:1fr;} }
+    h1{margin:0;color:var(--accent);}
+    .controls button{margin:6px;padding:10px 14px;font-weight:600;border-radius:10px;border:none;cursor:pointer;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .media{background:var(--card);border-radius:12px;padding:10px;display:flex;justify-content:center;align-items:center;min-height:240px;box-shadow:0 8px 20px rgba(0,0,0,0.05);}
+    video,img{width:100%;height:auto;border-radius:8px;max-height:400px;object-fit:contain;}
+    .right{display:flex;flex-direction:column;gap:12px;}
+    .result-card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,0.05);}
+    .prediction{font-size:20px;font-weight:800;color:var(--accent);}
+    .prob{font-size:14px;color:var(--muted);}
+    .spinner{width:14px;height:14px;border-radius:50%;border:2px solid rgba(0,0,0,.1);border-top-color:var(--accent);animation:spin 1s linear infinite;display:inline-block;}
+    @keyframes spin { to{transform:rotate(360deg);} }
+    .hint { font-size:13px;color:var(--muted); margin-top:8px;}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT PANEL -->
+    <div class="left">
+      <h1>AgriVision — Crop & Disease Detector</h1>
+      <div class="controls">
+        <button id="btn-open">Open Camera</button>
+        <label class="btn-upload" style="cursor:pointer;">
+          <span style="display:inline-block;margin:6px;padding:10px 14px;border-radius:10px;background:#eee;">Upload Image</span>
+          <input type="file" id="file" accept="image/*" style="display:none;">
+        </label>
+        <button id="btn-detect" class="btn-primary" disabled>Detect</button>
+      </div>
+      <div class="media" id="media-area">
+        <div id="placeholder" style="text-align:center;color:var(--muted);padding:8px;">
+          Preview<br>Open camera or upload an image
+        </div>
+        <video id="webcam" autoplay playsinline style="display:none;"></video>
+        <img id="imgPreview" style="display:none;" alt="preview image">
+      </div>
+      <div style="margin-top:12px;" id="model-status">
+        <span style="display:inline-block;margin-right:8px;" class="spinner"></span>
+        Loading Teachable Machine model...
+      </div>
+      <div class="hint">Use your camera or upload an image to detect crop health.</div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right">
+      <div class="result-card">
+        <div>Prediction</div>
+        <div class="prediction" id="predictionText">—</div>
+        <div class="prob" id="predictionProb">—</div>
+        <div style="margin-top:10px;">
+          <button id="btn-more">More Info</button>
+          <button id="btn-buy" class="btn-primary">Buy Products</button>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:var(--muted)" id="statusText">Status: Waiting for model</div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="hiddenCanvas" style="display:none;"></canvas>
+
+  <script>
+    const MODEL_URL = "https://teachablemachine.withgoogle.com/models/Bs-ykiSE3/";
+    let model, webcam, maxPredictions;
+    let webcamStream = null;
+
+    const webcamEl = document.getElementById('webcam');
+    const imgPreview = document.getElementById('imgPreview');
+    const btnOpen = document.getElementById('btn-open');
+    const btnDetect = document.getElementById('btn-detect');
+    const fileInput = document.getElementById('file');
+    const predictionText = document.getElementById('predictionText');
+    const predictionProb = document.getElementById('predictionProb');
+    const modelStatus = document.getElementById('model-status');
+    const statusText = document.getElementById('statusText');
+
+    // ✅ Load the model
+    async function initModel() {
+      try {
+        const modelURL = MODEL_URL + "model.json";
+        const metadataURL = MODEL_URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+        modelStatus.innerHTML = "✅ Model loaded successfully!";
+        statusText.innerText = "Status: Model ready";
+        btnDetect.disabled = false;
+      } catch (err) {
+        console.error(err);
+        modelStatus.innerHTML = "❌ Failed to load model.";
+        statusText.innerText = "Use camera or upload an image to detect crop health.";
+      }
+    }
+
+    initModel();
+
+    // Camera open
+    btnOpen.addEventListener('click', async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcamStream = stream;
+        webcamEl.srcObject = stream;
+        webcamEl.style.display = 'block';
+        imgPreview.style.display = 'none';
+        document.getElementById('placeholder').style.display = 'none';
+        statusText.innerText = 'Status: Camera open';
+      } catch (err) {
+        alert('Cannot access camera');
+      }
+    });
+
+    // Upload image
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+      const url = URL.createObjectURL(file);
+      imgPreview.src = url;
+      imgPreview.style.display = 'block';
+      webcamEl.style.display = 'none';
+      document.getElementById('placeholder').style.display = 'none';
+      imgPreview.onload = () => URL.revokeObjectURL(url);
+      statusText.innerText = 'Status: Image loaded';
+    });
+
+    // Detect button
+    btnDetect.addEventListener('click', async () => {
+      if (!model) return alert('Model not loaded yet!');
+      let prediction;
+      if (imgPreview.style.display === 'block') {
+        prediction = await model.predict(imgPreview);
+      } else if (webcamEl.style.display === 'block') {
+        prediction = await model.predict(webcamEl);
+      } else {
+        return alert('Please open camera or upload an image!');
+      }
+
+      // Sort predictions by probability
+      prediction.sort((a, b) => b.probability - a.probability);
+      predictionText.innerText = prediction[0].className;
+      predictionProb.innerText = (prediction[0].probability * 100).toFixed(2) + "%";
+      statusText.innerText = "Status: Detection complete ✅";
+    });
+
+    // Stop webcam when leaving page
+    window.addEventListener('beforeunload', () => {
+      if (webcamStream) webcamStream.getTracks().forEach(t => t.stop());
+    });
+
+    // Info buttons
+    document.getElementById('btn-more').addEventListener('click', () => {
+      const pred = predictionText.innerText;
+      if (!pred || pred === '—') return alert('No prediction available.');
+      window.open('https://acis-naitikanand.glide.page/?d=' + encodeURIComponent(pred), '_blank');
+    });
+
+    document.getElementById('btn-buy').addEventListener('click', () => {
+      window.open('https://acis-naitikanand.glide.page', '_blank');
+    });
+  </script>
+</body>
+</html>
